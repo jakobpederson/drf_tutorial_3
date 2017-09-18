@@ -20,21 +20,35 @@ def snippet_list(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+def run_get(snippet, request):
+    serializer = SnippetSerializer(snippet)
+    return Response(serializer.data)
+
+
+def run_put(snippet, request):
+    serializer = SnippetSerializer(snippet, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def run_delete(snippet, request):
+    snippet.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+MAPPING = {
+    'GET': run_get,
+    'PUT': run_put,
+    'DELETE': run_delete
+}
+
+
 @api_view(['GET', 'PUT', 'DELETE'])
 def snippet_detail(request, pk):
     try:
         snippet = Snippet.objects.get(pk=pk)
     except Snippet.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
-    if request.method == 'GET':
-        serializer = SnippetSerializer(snippet)
-        return Response(serializer.data)
-    elif request.method == 'PUT':
-        serializer = SnippetSerializer(snippet, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    elif request.method == 'DELETE':
-        snippet.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    return MAPPING[request.method](snippet, request)
