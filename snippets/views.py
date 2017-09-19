@@ -20,12 +20,13 @@ def snippet_list(request, format=None):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def run_get(snippet, *args):
+def run_get(snippet, **kwargs):
     serializer = SnippetSerializer(snippet)
     return Response(serializer.data)
 
 
-def run_put(snippet, request):
+def run_put(snippet, **kwargs):
+    request = kwargs['request']
     serializer = SnippetSerializer(snippet, data=request.data)
     if serializer.is_valid():
         serializer.save()
@@ -33,7 +34,7 @@ def run_put(snippet, request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def run_delete(snippet, *args):
+def run_delete(snippet, **kwargs):
     snippet.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -51,4 +52,4 @@ def snippet_detail(request, pk, format=None):
         snippet = Snippet.objects.get(pk=pk)
     except Snippet.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
-    return MAPPING[request.method](snippet, request)
+    return MAPPING[request.method](snippet, request=request)
