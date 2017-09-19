@@ -7,10 +7,11 @@ from rest_framework.response import Response
 from snippets.models import Snippet
 from snippets.serializers import SnippetSerializer
 
+
 class SnippetList(APIView):
     def get(self, request, format=None):
         snippets = Snippet.objects.all()
-        serializer = SnippetSerializers(snippets, many=True)
+        serializer = SnippetSerializer(snippets, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
