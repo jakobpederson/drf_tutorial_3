@@ -20,7 +20,7 @@ def snippet_list(request, format=None):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def run_get(snippet, request):
+def run_get(snippet, *args):
     serializer = SnippetSerializer(snippet)
     return Response(serializer.data)
 
@@ -33,7 +33,7 @@ def run_put(snippet, request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def run_delete(snippet, request):
+def run_delete(snippet, *args):
     snippet.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
 
