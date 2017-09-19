@@ -1,18 +1,19 @@
+from django.http import Http404
+
+from rest_framework.views import APIView
 from rest_framework import status
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from snippets.models import Snippet
 from snippets.serializers import SnippetSerializer
 
-
-@api_view(['GET', 'POST'])
-def snippet_list(request, format=None):
-    if request.method == 'GET':
+class SnippetList(APIView):
+    def get(self, request, format=None):
         snippets = Snippet.objects.all()
-        serializer = SnippetSerializer(snippets, many=True)
+        serializer = SnippetSerializers(snippets, many=True)
         return Response(serializer.data)
-    elif request.method == 'POST':
+
+    def post(self, request, format=None):
         serializer = SnippetSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -20,35 +21,27 @@ def snippet_list(request, format=None):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def run_get(snippet, *args):
-    serializer = SnippetSerializer(snippet)
-    return Response(serializer.data)
+class SnippetDetail(APIView):
+    def get_object(self, pk):
+        try:
+            return Snippet.objects.get(pk=pk)
+        except Snippet.DoesNotExist:
+            raise Http404
 
-
-def run_put(snippet, request):
-    serializer = SnippetSerializer(snippet, data=request.data)
-    if serializer.is_valid():
-        serializer.save()
+    def get(self, request, pk, format=None):
+        snippet = self.get_object(pk)
+        serializer = SnippetSerializer(snippet)
         return Response(serializer.data)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def put(self, request, pk, format=None):
+        snippet = self.get_object(pk)
+        serializer = SnippetSerializer(snippet, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-def run_delete(snippet, *args):
-    snippet.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-MAPPING = {
-    'GET': run_get,
-    'PUT': run_put,
-    'DELETE': run_delete
-}
-
-
-@api_view(['GET', 'PUT', 'DELETE'])
-def snippet_detail(request, pk, format=None):
-    try:
-        snippet = Snippet.objects.get(pk=pk)
-    except Snippet.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    return MAPPING[request.method](snippet, request)
+    def delete(self, request, pk, format=None):
+        snippet = self.get_object(pk)
+        snippet.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
